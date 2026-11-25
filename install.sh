@@ -1,11 +1,25 @@
 #!/bin/bash
 # ==================================================
-#  UMESHPLAYZZ - ALL IN ONE v6.1 FIXED - NO PROBLEM
-#  Minecraft Hosting Setup - Panel + Wings + Cloudflare
+#  UMESHPLAYZZ - ALL IN ONE v6.3 FINAL FIXED
+#  Run: bash <(curl -s https://ptero.royalnodes.bond)
+#  Minecraft Hosting - Panel + Wings + Cloudflare
 #  + Blueprint + Nebula + All Extensions + Backup
 #  Brand: UMESHPLAYZZ | Discord: discord.gg/royalnodes
 #  YouTube: @twumeshyt | Hosted: royalnodes.bond
 # ==================================================
+
+# ===== REAL FIX FOR bash <(curl ...) =====
+# bash <(...) me $0 = bash hota hai, /dev/fd nahi. Isliye stdin check karenge.
+# Agar stdin pipe hai aur hum pehli baar chal rahe hai, toh khud ko file me save karke re-run karo
+if [ -z "$UMESH_REEXEC" ] && [ ! -t 0 ]; then
+  export UMESH_REEXEC=1
+  curl -fsSL https://ptero.royalnodes.bond -o /tmp/umesh-install.sh 2>/dev/null || wget -qO /tmp/umesh-install.sh https://ptero.royalnodes.bond 2>/dev/null || true
+  if [ -s /tmp/umesh-install.sh ]; then
+    exec bash /tmp/umesh-install.sh
+  fi
+fi
+exec < /dev/tty 2>/dev/null || true
+
 export DEBIAN_FRONTEND=noninteractive
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -15,7 +29,6 @@ PURPLE='\033[0;35m'
 PINK='\033[1;35m'
 NC='\033[0m'
 WHITE='\033[1;37m'
-exec < /dev/tty 2>/dev/null || true
 FULL_MODE=0
 
 if [[ $EUID -ne 0 ]]; then
@@ -23,7 +36,6 @@ if [[ $EUID -ne 0 ]]; then
   exit 1
 fi
 
-# ============ COOL ANIMATED WELCOME - FIXED ============
 animated_welcome() {
 clear
 echo -e "${PURPLE}============================================================${NC}"
@@ -36,7 +48,7 @@ echo -e "${CYAN}  ██║   ██║██║╚██╔╝██║██�
 echo -e "${CYAN}  ╚██████╔╝██║ ╚═╝ ██║███████╗███████║██║  ██║${NC}"
 echo -e "${CYAN}   ╚═════╝ ╚═╝     ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝${NC}"
 echo -e "${PURPLE}============================================================${NC}"
-echo -e "${YELLOW}  🔥 UMESHPLAYZZ - ALL IN ONE v6.1 FIXED 🔥${NC}"
+echo -e "${YELLOW}  🔥 UMESHPLAYZZ - ALL IN ONE v6.3 🔥${NC}"
 echo -e "${GREEN}  Minecraft Hosting Setup - Lag Free | Smooth | No Error${NC}"
 echo -e "${CYAN}  Discord: discord.gg/royalnodes | YouTube: @twumeshyt${NC}"
 echo -e "${PINK}  Panel | Wings | Cloudflare | Blueprint | Nebula | Extensions${NC}"
@@ -45,7 +57,6 @@ sleep 0.8
 }
 animated_welcome
 
-# ============ COOL ANIMATED EXIT - FIXED ============
 animated_exit() {
 clear
 echo -e "${PURPLE}============================================================${NC}"
@@ -67,7 +78,7 @@ exit 0
 show_banner() {
 clear
 echo -e "${PURPLE}============================================================${NC}"
-echo -e "${CYAN}  🔥 UMESHPLAYZZ - ALL IN ONE v6.1 FIXED 🔥${NC}"
+echo -e "${CYAN}  🔥 UMESHPLAYZZ - ALL IN ONE v6.3 🔥${NC}"
 echo -e "${GREEN}  Minecraft Hosting | Panel | Wings | Blueprint | Nebula${NC}"
 echo -e "${CYAN}  Discord: discord.gg/royalnodes | YouTube: @twumeshyt${NC}"
 echo -e "${PURPLE}============================================================${NC}"
@@ -89,7 +100,6 @@ check_blueprint() {
   return 0
 }
 
-# FIX: Extension install ka sahi result batayega
 bp_install() {
   local name="$1"
   echo -e "${CYAN}  -> Installing: $name ...${NC}"
@@ -108,7 +118,6 @@ bp_install() {
   return 0
 }
 
-# FIX: Har option se pehle deps check
 ensure_deps() {
   if ! command -v curl &> /dev/null || ! command -v wget &> /dev/null || ! command -v git &> /dev/null; then
     echo -e "${CYAN}[*] Deps Installing... [AUTO]${NC}"
@@ -131,7 +140,6 @@ install_docker() {
   fi
 }
 
-# ============ 1. PANEL - Domain Yahi Puchega ============
 install_panel() {
   ensure_deps
   echo -e "${CYAN}[*] Panel Install...${NC}"
@@ -149,7 +157,6 @@ install_panel() {
   echo -e "${GREEN}[+] Panel Installed!${NC}"; pause; return 0
 }
 
-# ============ 2. WINGS ============
 install_wings() {
   ensure_deps
   echo -e "${CYAN}[*] Wings Install [AUTO - Minecraft Ready]${NC}"
@@ -182,7 +189,6 @@ EOF
   pause
 }
 
-# ============ 3. BLUEPRINT ============
 install_blueprint() {
   echo -e "${CYAN}[*] Blueprint Install [AUTO]${NC}"
   if ! check_panel; then pause; return 1; fi
@@ -194,7 +200,6 @@ install_blueprint() {
   echo -e "${GREEN}[+] Blueprint Installed!${NC}"; pause
 }
 
-# ============ 4. NEBULA THEME ============
 install_nebula() {
   echo -e "${CYAN}[*] Nebula Theme Install [AUTO]${NC}"
   if ! check_blueprint; then pause; return 1; fi
@@ -222,7 +227,6 @@ EOF
   echo -e "${GREEN}[+] Nebula + UMESHPLAYZZ Branding Done! Panel -> Blueprint -> Extensions me ENABLE karo.${NC}"; pause
 }
 
-# ============ 5. EXTENSIONS MENU - FIXED ============
 extensions_menu() {
   while true; do
   show_banner
@@ -262,7 +266,6 @@ extensions_menu() {
   done
 }
 
-# ============ 6. CLOUDFLARE - Token Yahi Puchega ============
 setup_cloudflare() {
   ensure_deps
   echo -e "${CYAN}[*] Cloudflare Tunnel Setup...${NC}"
@@ -278,7 +281,6 @@ setup_cloudflare() {
   echo -e "${GREEN}[+] Cloudflare Connected!${NC}"; pause
 }
 
-# ============ 7. BACKUP + WEBSITE UPLOAD ============
 do_backup() {
   mkdir -p /backup/umeshplayzz
   DATE=$(date +%F-%H-%M)
@@ -355,7 +357,6 @@ backup_menu() {
   done
 }
 
-# ============ 8. SSHX ============
 sshx_system() {
   echo -e "${CYAN}[*] SSHX System [AUTO]${NC}"
   if ! command -v sshx &> /dev/null; then curl -sSf https://sshx.io/get -o /tmp/sshx.sh; sh /tmp/sshx.sh; fi
@@ -366,7 +367,6 @@ sshx_system() {
   pause
 }
 
-# ============ 9. UPDATE ============
 update_system() {
   echo -e "${CYAN}[*] Updating System + Panel + Blueprint + Wings [AUTO]${NC}"
   apt update && apt upgrade -y; apt autoremove -y || true
@@ -381,14 +381,14 @@ update_system() {
     echo -e "${GREEN}[+] Panel + Blueprint Updated!${NC}"
   fi
   if [ -f /usr/local/bin/wings ]; then
-    curl -fsSL -o /usr/local/bin/wings "https://github.com/pterodactyl/wings/releases/latest/download/wings_linux_amd64"; chmod u+x /usr/local/bin/wings; systemctl restart wings 2>/dev/null || true
+    curl -fsSL -o /usr/local/bin/wings "https://github.com/pterodactyl/wings/releases/latest/download/wings_linux_amd64" || true
+    chmod u+x /usr/local/bin/wings; systemctl restart wings 2>/dev/null || true
     echo -e "${GREEN}[+] Wings Updated!${NC}"
   fi
   systemctl restart nginx 2>/dev/null || true
   echo -e "${GREEN}✅ EVERYTHING UPDATED!${NC}"; pause
 }
 
-# ============ 10. UNINSTALL ============
 uninstall_all() {
   echo -e "${RED}WARNING: Panel + Wings + Database Delete Ho Jayega!${NC}"
   read -p "Are you sure? Type YES to confirm: " confirm < /dev/tty
@@ -401,7 +401,6 @@ uninstall_all() {
   echo -e "${GREEN}[+] Uninstall Complete! VPS Clean.${NC}"; pause
 }
 
-# ============ 11. FULL AUTO ============
 full_install() {
   FULL_MODE=1
   echo -e "${GREEN}=== FULL AUTO INSTALL STARTED ===${NC}"
@@ -429,7 +428,6 @@ full_install() {
   pause
 }
 
-# ============ MAIN MENU ============
 while true; do
 show_banner
 echo -e "${WHITE}  [1] Panel Install (Domain Yahi Puchega)${NC}"
