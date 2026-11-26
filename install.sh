@@ -1,16 +1,14 @@
 #!/bin/bash
 # ==================================================
-#  UMESHPLAYZZ - ALL IN ONE v6.3 FINAL FIXED
+#  UMESHPLAYZZ - ALL IN ONE v7.2 COMPACT MENU
 #  Run: bash <(curl -s https://ptero.royalnodes.bond)
 #  Minecraft Hosting - Panel + Wings + Cloudflare
-#  + Blueprint + Nebula + All Extensions + Backup
+#  + Blueprint + Themes + Extensions + Backup + Restore
+#  + Node + SSL + Firewall + Performance + Panel Tools
 #  Brand: UMESHPLAYZZ | Discord: discord.gg/royalnodes
 #  YouTube: @twumeshyt | Hosted: royalnodes.bond
 # ==================================================
 
-# ===== REAL FIX FOR bash <(curl ...) =====
-# bash <(...) me $0 = bash hota hai, /dev/fd nahi. Isliye stdin check karenge.
-# Agar stdin pipe hai aur hum pehli baar chal rahe hai, toh khud ko file me save karke re-run karo
 if [ -z "$UMESH_REEXEC" ] && [ ! -t 0 ]; then
   export UMESH_REEXEC=1
   curl -fsSL https://ptero.royalnodes.bond -o /tmp/umesh-install.sh 2>/dev/null || wget -qO /tmp/umesh-install.sh https://ptero.royalnodes.bond 2>/dev/null || true
@@ -18,7 +16,6 @@ if [ -z "$UMESH_REEXEC" ] && [ ! -t 0 ]; then
     exec bash /tmp/umesh-install.sh
   fi
 fi
-exec < /dev/tty 2>/dev/null || true
 
 export DEBIAN_FRONTEND=noninteractive
 RED='\033[0;31m'
@@ -36,11 +33,21 @@ if [[ $EUID -ne 0 ]]; then
   exit 1
 fi
 
+clean_input() {
+  echo "$1" | tr -d ' \r\n\t' | tr '[:upper:]' '[:lower:]'
+}
+ask() {
+  local prompt="$1" var="$2" raw=""
+  IFS= read -r -p "$prompt" raw || true
+  raw=$(echo "$raw" | tr -d '\r')
+  printf -v "$var" "%s" "$raw"
+}
+
 animated_welcome() {
 clear
 echo -e "${PURPLE}============================================================${NC}"
 echo -e "${CYAN}  Loading UMESHPLAYZZ... Please Wait${NC}"
-sleep 0.5
+sleep 0.4
 echo -e "${CYAN}  ██╗   ██╗███╗   ███╗███████╗███████╗██╗  ██╗${NC}"
 echo -e "${CYAN}  ██║   ██║████╗ ████║██╔════╝██╔════╝██║  ██║${NC}"
 echo -e "${CYAN}  ██║   ██║██╔████╔██║█████╗  ███████╗███████║${NC}"
@@ -48,12 +55,13 @@ echo -e "${CYAN}  ██║   ██║██║╚██╔╝██║██�
 echo -e "${CYAN}  ╚██████╔╝██║ ╚═╝ ██║███████╗███████║██║  ██║${NC}"
 echo -e "${CYAN}   ╚═════╝ ╚═╝     ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝${NC}"
 echo -e "${PURPLE}============================================================${NC}"
-echo -e "${YELLOW}  🔥 UMESHPLAYZZ - ALL IN ONE v6.3 🔥${NC}"
+echo -e "${YELLOW}  🔥 UMESHPLAYZZ - ALL IN ONE v7.2 COMPACT 🔥${NC}"
 echo -e "${GREEN}  Minecraft Hosting Setup - Lag Free | Smooth | No Error${NC}"
 echo -e "${CYAN}  Discord: discord.gg/royalnodes | YouTube: @twumeshyt${NC}"
-echo -e "${PINK}  Panel | Wings | Cloudflare | Blueprint | Nebula | Extensions${NC}"
+echo -e "${PINK}  Panel | Wings | Blueprint | Themes | Extensions${NC}"
+echo -e "${PINK}  Cloudflare | SSL | Backup | Node | Performance${NC}"
 echo -e "${PURPLE}============================================================${NC}"
-sleep 0.8
+sleep 0.6
 }
 animated_welcome
 
@@ -70,16 +78,16 @@ echo -e "${CYAN}   ╚═════╝ ╚═╝     ╚═╝╚════�
 echo -e "${YELLOW}  Discord: discord.gg/royalnodes | YouTube: @twumeshyt${NC}"
 echo -e "${GREEN}  Panel: royalnodes.bond | Made with Love by UMESHPLAYZZ${NC}"
 echo -e "${PURPLE}============================================================${NC}"
-echo -e "${CYAN}  Closing... Bye Bye! Fir Milenge 🔥${NC}"
-sleep 0.8
+echo -e "${CYAN}  Closing... Bye Bye! See You Again 🔥${NC}"
+sleep 0.6
 exit 0
 }
 
 show_banner() {
 clear
 echo -e "${PURPLE}============================================================${NC}"
-echo -e "${CYAN}  🔥 UMESHPLAYZZ - ALL IN ONE v6.3 🔥${NC}"
-echo -e "${GREEN}  Minecraft Hosting | Panel | Wings | Blueprint | Nebula${NC}"
+echo -e "${CYAN}  🔥 UMESHPLAYZZ - ALL IN ONE v7.2 🔥${NC}"
+echo -e "${GREEN}  Minecraft Hosting | Panel | Wings | Blueprint | Themes${NC}"
 echo -e "${CYAN}  Discord: discord.gg/royalnodes | YouTube: @twumeshyt${NC}"
 echo -e "${PURPLE}============================================================${NC}"
 }
@@ -87,29 +95,33 @@ echo -e "${PURPLE}============================================================${
 pause() {
   if [ "$FULL_MODE" = "1" ]; then return; fi
   echo ""
-  read -p "Press Enter to continue... " _ < /dev/tty || true
+  IFS= read -r -p "Press Enter to continue... " _ || true
 }
 
 check_panel() {
-  if [ ! -d "/var/www/pterodactyl" ]; then echo -e "${RED}[!] Pehle Panel Install Karo (Option 1)${NC}"; return 1; fi
+  if [ ! -d "/var/www/pterodactyl" ]; then echo -e "${RED}[!] Please install Panel first${NC}"; return 1; fi
   return 0
 }
 check_blueprint() {
   if ! check_panel; then return 1; fi
-  if ! command -v blueprint &> /dev/null; then echo -e "${RED}[!] Pehle Blueprint Install Karo (Option 3)${NC}"; return 1; fi
+  if ! command -v blueprint &> /dev/null; then echo -e "${RED}[!] Please install Blueprint first${NC}"; return 1; fi
+  return 0
+}
+check_wings() {
+  if [ ! -f /usr/local/bin/wings ]; then echo -e "${RED}[!] Please install Wings first${NC}"; return 1; fi
   return 0
 }
 
 bp_install() {
   local name="$1"
   echo -e "${CYAN}  -> Installing: $name ...${NC}"
-  if ! cd /var/www/pterodactyl 2>/dev/null; then echo -e "${RED}  Panel folder nahi mila!${NC}"; return 1; fi
-  if blueprint -install "$name" < /dev/tty 2>/dev/null; then
+  if ! cd /var/www/pterodactyl 2>/dev/null; then echo -e "${RED}  Panel folder not found!${NC}"; return 1; fi
+  if blueprint -install "$name"; then
     echo -e "${GREEN}  [OK] $name Installed!${NC}"
-  elif blueprint -i "$name" < /dev/tty 2>/dev/null; then
+  elif blueprint -i "$name"; then
     echo -e "${GREEN}  [OK] $name Installed!${NC}"
   else
-    echo -e "${YELLOW}  [!] $name auto install nahi hua - Panel -> Blueprint -> Extensions se manually ENABLE karo${NC}"
+    echo -e "${YELLOW}  [!] $name auto install failed - Enable manually in Panel Blueprint Extensions${NC}"
     return 1
   fi
   php artisan view:clear 2>/dev/null || true
@@ -120,46 +132,44 @@ bp_install() {
 
 ensure_deps() {
   if ! command -v curl &> /dev/null || ! command -v wget &> /dev/null || ! command -v git &> /dev/null; then
-    echo -e "${CYAN}[*] Deps Installing... [AUTO]${NC}"
+    echo -e "${CYAN}[*] Installing Dependencies...${NC}"
     apt update -y 2>/dev/null || true
-    apt install -y curl wget sudo git unzip tar zip cron certbot python3 software-properties-common apt-transport-https ca-certificates gnupg lsb-release mariadb-client 2>/dev/null || apt install -y curl wget git unzip tar zip cron 2>/dev/null || true
+    apt install -y curl wget sudo git unzip tar zip cron certbot python3 software-properties-common apt-transport-https ca-certificates gnupg lsb-release mariadb-client htop net-tools ufw 2>/dev/null || apt install -y curl wget git unzip tar zip cron 2>/dev/null || true
   fi
 }
 install_deps() {
-  echo -e "${CYAN}[*] System Update + Deps [AUTO]${NC}"
+  echo -e "${CYAN}[*] System Update + Dependencies...${NC}"
   apt update -y || apt update || true
   apt upgrade -y || true
-  apt install -y curl wget sudo git unzip tar zip cron certbot python3 software-properties-common apt-transport-https ca-certificates gnupg lsb-release mariadb-client || apt install -y curl wget git unzip tar zip cron certbot python3 || true
+  apt install -y curl wget sudo git unzip tar zip cron certbot python3 software-properties-common apt-transport-https ca-certificates gnupg lsb-release mariadb-client htop net-tools ufw || apt install -y curl wget git unzip tar zip cron certbot python3 || true
   echo -e "${GREEN}[+] System Ready!${NC}"
 }
-
 install_docker() {
   if ! command -v docker &> /dev/null; then
-    echo -e "${YELLOW}[*] Docker Installing... [AUTO]${NC}"
+    echo -e "${YELLOW}[*] Installing Docker...${NC}"
     curl -fsSL https://get.docker.com -o /tmp/docker.sh; sh /tmp/docker.sh; systemctl enable --now docker || true
   fi
 }
 
+# ============ INSTALL - PANEL + WINGS ============
 install_panel() {
   ensure_deps
   echo -e "${CYAN}[*] Panel Install...${NC}"
-  echo -e "${YELLOW}Ab Domain / Email / Password puchega - Yahi pe dalna hai.${NC}"
   sleep 1
   curl -fsSL -o /tmp/ptero-installer.sh https://pterodactyl-installer.se || curl -fsSL -o /tmp/ptero-installer.sh https://raw.githubusercontent.com/pterodactyl-installer/pterodactyl-installer/master/install.sh
-  if [ ! -s /tmp/ptero-installer.sh ]; then echo -e "${RED}[!] Download Failed! Internet check karo.${NC}"; pause; return 1; fi
-  bash /tmp/ptero-installer.sh < /dev/tty
+  if [ ! -s /tmp/ptero-installer.sh ]; then echo -e "${RED}[!] Download Failed! Check Internet.${NC}"; pause; return 1; fi
+  bash /tmp/ptero-installer.sh
   if [ ! -d "/var/www/pterodactyl" ]; then
-    echo -e "${YELLOW}Retry with GitHub installer...${NC}"
+    echo -e "${YELLOW}Retrying with GitHub installer...${NC}"
     curl -fsSL -o /tmp/ptero2.sh https://raw.githubusercontent.com/pterodactyl-installer/pterodactyl-installer/master/install.sh
-    bash /tmp/ptero2.sh < /dev/tty
+    bash /tmp/ptero2.sh
   fi
-  if [ ! -d "/var/www/pterodactyl" ]; then echo -e "${RED}[!] Panel Failed! Dobara try karo.${NC}"; pause; return 1; fi
+  if [ ! -d "/var/www/pterodactyl" ]; then echo -e "${RED}[!] Panel Install Failed! Try Again.${NC}"; pause; return 1; fi
   echo -e "${GREEN}[+] Panel Installed!${NC}"; pause; return 0
 }
-
 install_wings() {
   ensure_deps
-  echo -e "${CYAN}[*] Wings Install [AUTO - Minecraft Ready]${NC}"
+  echo -e "${CYAN}[*] Wings Install...${NC}"
   install_docker
   curl -fsSL -o /usr/local/bin/wings "https://github.com/pterodactyl/wings/releases/latest/download/wings_linux_amd64" || { echo -e "${RED}[!] Wings Download Failed!${NC}"; pause; return 1; }
   chmod u+x /usr/local/bin/wings
@@ -184,24 +194,43 @@ RestartSec=5s
 WantedBy=multi-user.target
 EOF
   systemctl daemon-reload; systemctl enable wings || true
-  echo -e "${GREEN}[+] Wings Installed! Minecraft Servers Ready!${NC}"
-  echo -e "${YELLOW}Node Setup: Panel -> Admin -> Nodes -> New Node -> Config -> /etc/pterodactyl/config.yml -> systemctl restart wings${NC}"
+  echo -e "${GREEN}[+] Wings Installed!${NC}"
+  echo -e "${YELLOW}Node Setup: Use Node Menu - Paste Config${NC}"
   pause
 }
+install_menu() {
+  while true; do
+  show_banner
+  echo -e "${CYAN}=== INSTALL MENU ===${NC}"
+  echo -e "${WHITE}  [1] Panel Install${NC}"
+  echo -e "${WHITE}  [2] Wings Install${NC}"
+  echo -e "${WHITE}  [3] Install Panel + Wings Both${NC}"
+  echo -e "${WHITE}  [0] Back${NC}"
+  echo -e "${PURPLE}============================================================${NC}"
+  ask "Select 0-3: " i_raw; i=$(clean_input "$i_raw")
+  case $i in
+    1) install_panel ;;
+    2) install_wings ;;
+    3) install_panel && install_wings ;;
+    0) return ;;
+    *) echo -e "${RED}Invalid!${NC}"; sleep 1 ;;
+  esac
+  done
+}
 
+# ============ BLUEPRINT + THEMES ============
 install_blueprint() {
-  echo -e "${CYAN}[*] Blueprint Install [AUTO]${NC}"
+  echo -e "${CYAN}[*] Blueprint Install...${NC}"
   if ! check_panel; then pause; return 1; fi
   cd /var/www/pterodactyl || return 1
   curl -fsSL -o /tmp/blueprint.sh https://raw.githubusercontent.com/BlueprintFramework/framework/main/install.sh || { echo -e "${RED}[!] Download Failed!${NC}"; pause; return 1; }
-  printf "y\ny\ny\n" | bash /tmp/blueprint.sh || bash /tmp/blueprint.sh < /dev/tty
+  printf "y\ny\ny\n" | bash /tmp/blueprint.sh || bash /tmp/blueprint.sh
   ln -sf /var/www/pterodactyl/blueprint.sh /usr/local/bin/blueprint 2>/dev/null || true
-  if ! command -v blueprint &> /dev/null; then echo -e "${YELLOW}[!] Blueprint command nahi mila, Panel check karo.${NC}"; pause; return 1; fi
+  if ! command -v blueprint &> /dev/null; then echo -e "${YELLOW}[!] Blueprint command not found, Check Panel.${NC}"; pause; return 1; fi
   echo -e "${GREEN}[+] Blueprint Installed!${NC}"; pause
 }
-
 install_nebula() {
-  echo -e "${CYAN}[*] Nebula Theme Install [AUTO]${NC}"
+  echo -e "${CYAN}[*] Nebula Theme Install...${NC}"
   if ! check_blueprint; then pause; return 1; fi
   cd /var/www/pterodactyl || return 1
   mkdir -p /tmp/nebula && cd /tmp/nebula; rm -f nebula.blueprint nebula.zip
@@ -211,9 +240,8 @@ install_nebula() {
   elif [ -f nebula.zip ] && [ -s nebula.zip ]; then
     unzip -o nebula.zip -d /var/www/pterodactyl/; cd /var/www/pterodactyl || return 1; bp_install nebula || true
   else
-    echo -e "${RED}[!] Nebula Download Failed! Panel -> Blueprint -> Extensions se upload karo.${NC}"; pause; return 1
+    echo -e "${RED}[!] Nebula Download Failed! Upload manually in Panel Blueprint Extensions${NC}"; pause; return 1
   fi
-  echo -e "${CYAN}[*] UMESHPLAYZZ Branding Applying...${NC}"
   mkdir -p /var/www/pterodactyl/public/themes/umeshplayzz
   cat > /var/www/pterodactyl/public/themes/umeshplayzz-custom.css << 'EOF'
 /* UMESHPLAYZZ - MINECRAFT HOSTING */
@@ -224,26 +252,62 @@ EOF
   php artisan view:clear 2>/dev/null || true; php artisan config:clear 2>/dev/null || true
   chown -R www-data:www-data /var/www/pterodactyl 2>/dev/null || true
   php artisan queue:restart 2>/dev/null || true; systemctl restart nginx 2>/dev/null || true
-  echo -e "${GREEN}[+] Nebula + UMESHPLAYZZ Branding Done! Panel -> Blueprint -> Extensions me ENABLE karo.${NC}"; pause
+  echo -e "${GREEN}[+] Nebula Installed! Enable it in Panel Blueprint Extensions${NC}"; pause
+}
+install_theme_generic() {
+  local theme_name="$1"
+  echo -e "${CYAN}[*] $theme_name Theme Install...${NC}"
+  if ! check_blueprint; then pause; return 1; fi
+  cd /var/www/pterodactyl || return 1
+  bp_install "$theme_name" || echo -e "${YELLOW}[!] $theme_name not found in Blueprint - Check Panel Blueprint Extensions for available themes${NC}"
+  pause
+}
+blueprint_themes_menu() {
+  while true; do
+  show_banner
+  echo -e "${CYAN}=== BLUEPRINT + THEMES ===${NC}"
+  echo -e "${WHITE}  [1] Blueprint Install${NC}"
+  echo -e "${WHITE}  [2] Nebula Theme${NC}"
+  echo -e "${WHITE}  [3] Enigma Theme${NC}"
+  echo -e "${WHITE}  [4] Reaper Theme${NC}"
+  echo -e "${WHITE}  [5] Midnight Theme${NC}"
+  echo -e "${WHITE}  [6] Update Blueprint${NC}"
+  echo -e "${WHITE}  [0] Back${NC}"
+  echo -e "${PURPLE}============================================================${NC}"
+  ask "Select 0-6: " bt_raw; bt=$(clean_input "$bt_raw")
+  case $bt in
+    1) install_blueprint ;;
+    2) install_nebula ;;
+    3) install_theme_generic "enigma" ;;
+    4) install_theme_generic "reaper" ;;
+    5) install_theme_generic "midnight" ;;
+    6) printf "y\n" | blueprint -update 2>/dev/null || { curl -fsSL -o /tmp/bp-up.sh https://raw.githubusercontent.com/BlueprintFramework/framework/main/install.sh; bash /tmp/bp-up.sh; } || true; echo -e "${GREEN}[+] Blueprint Updated!${NC}"; pause ;;
+    0) return ;;
+    *) echo -e "${RED}Invalid!${NC}"; sleep 1 ;;
+  esac
+  done
 }
 
+# ============ EXTENSIONS - 12 OPTIONS ============
 extensions_menu() {
   while true; do
   show_banner
-  echo -e "${CYAN}=== EXTENSIONS MENU - UMESHPLAYZZ ===${NC}"
-  echo -e "${WHITE}  [1] Version Changer (Minecraft Version Change)${NC}"
-  echo -e "${WHITE}  [2] Player Management (Players Manage)${NC}"
-  echo -e "${WHITE}  [3] Plugin Installer (1-Click Plugins)${NC}"
-  echo -e "${WHITE}  [4] Hux Register (Register System)${NC}"
-  echo -e "${WHITE}  [5] Snowflakes (Winter Effect)${NC}"
-  echo -e "${WHITE}  [6] MOTD Maker (Server MOTD)${NC}"
-  echo -e "${WHITE}  [7] Icon Importer (Server Icon)${NC}"
-  echo -e "${WHITE}  [8] Server Splitting (Split Servers)${NC}"
-  echo -e "${WHITE}  [9] Allocation Manager (IPs / Ports)${NC}"
-  echo -e "${WHITE}  [10] Install ALL Extensions (Popular All)${NC}"
-  echo -e "${WHITE}  [0] Back to Main Menu${NC}"
+  echo -e "${CYAN}=== EXTENSIONS MENU ===${NC}"
+  echo -e "${WHITE}  [1] Version Changer${NC}"
+  echo -e "${WHITE}  [2] Player Management${NC}"
+  echo -e "${WHITE}  [3] Plugin Installer${NC}"
+  echo -e "${WHITE}  [4] Hux Register${NC}"
+  echo -e "${WHITE}  [5] Snowflakes${NC}"
+  echo -e "${WHITE}  [6] MOTD Maker${NC}"
+  echo -e "${WHITE}  [7] Icon Importer${NC}"
+  echo -e "${WHITE}  [8] Server Splitting${NC}"
+  echo -e "${WHITE}  [9] Allocation Manager${NC}"
+  echo -e "${WHITE}  [10] Server Importer${NC}"
+  echo -e "${WHITE}  [11] File Manager${NC}"
+  echo -e "${WHITE}  [12] Install All Extensions${NC}"
+  echo -e "${WHITE}  [0] Back${NC}"
   echo -e "${PURPLE}============================================================${NC}"
-  read -p "Select Extension [0-10]: " e < /dev/tty
+  ask "Select Extension 0-12: " e_raw; e=$(clean_input "$e_raw")
   case $e in
     1) if check_blueprint; then bp_install "version-changer"; fi; pause ;;
     2) if check_blueprint; then bp_install "player-manager"; fi; pause ;;
@@ -254,33 +318,92 @@ extensions_menu() {
     7) if check_blueprint; then bp_install "icon-importer"; fi; pause ;;
     8) if check_blueprint; then bp_install "server-splitting"; fi; pause ;;
     9) if check_blueprint; then bp_install "allocation-manager"; fi; pause ;;
-    10)
+    10) if check_blueprint; then bp_install "server-importer"; fi; pause ;;
+    11) if check_blueprint; then bp_install "file-manager"; fi; pause ;;
+    12)
       if ! check_blueprint; then pause; continue; fi
-      echo -e "${CYAN}[*] Installing ALL Extensions... [AUTO]${NC}"
-      for ext in version-changer player-manager plugin-installer hux-register snowflakes motd-maker icon-importer server-splitting allocation-manager; do bp_install "$ext" || true; done
+      echo -e "${CYAN}[*] Installing All Extensions...${NC}"
+      for ext in version-changer player-manager plugin-installer hux-register snowflakes motd-maker icon-importer server-splitting allocation-manager server-importer file-manager; do bp_install "$ext" || true; done
       cd /var/www/pterodactyl 2>/dev/null || true; chown -R www-data:www-data /var/www/pterodactyl 2>/dev/null || true; php artisan queue:restart 2>/dev/null || true; systemctl restart nginx 2>/dev/null || true
-      echo -e "${GREEN}[+] ALL Extensions Process Done! Panel -> Blueprint -> Extensions me ENABLE karo.${NC}"; pause ;;
+      echo -e "${GREEN}[+] All Extensions Installed! Enable in Panel Blueprint Extensions${NC}"; pause ;;
     0) return ;;
     *) echo -e "${RED}Invalid!${NC}"; sleep 1 ;;
   esac
   done
 }
 
+# ============ NETWORK - CLOUDFLARE + SSL + FIREWALL ============
 setup_cloudflare() {
   ensure_deps
   echo -e "${CYAN}[*] Cloudflare Tunnel Setup...${NC}"
-  echo -e "${YELLOW}Abhi Token puchega - Yahi pe dalna hai.${NC}"
-  read -p "Enter Cloudflare Tunnel Token: " CF_TOKEN < /dev/tty
-  CF_TOKEN=$(echo "$CF_TOKEN" | tr -d ' ' | tr -d '\n' | tr -d '\r')
+  ask "Enter Cloudflare Tunnel Token: " CF_TOKEN_RAW
+  CF_TOKEN=$(echo "$CF_TOKEN_RAW" | tr -d ' \r\n\t')
   if [ -z "$CF_TOKEN" ]; then echo -e "${RED}[!] Token Empty!${NC}"; pause; return 1; fi
-  echo -e "${CYAN}Installing cloudflared... [AUTO]${NC}"
+  echo -e "${CYAN}Installing cloudflared...${NC}"
   curl -fsSL --output /tmp/cloudflared.deb "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb" || { echo -e "${RED}[!] Download Failed!${NC}"; pause; return 1; }
   dpkg -i /tmp/cloudflared.deb || apt -f install -y || true
-  cloudflared service install "$CF_TOKEN" || { echo -e "${RED}[!] Cloudflare Install Failed! Token check karo.${NC}"; pause; return 1; }
+  cloudflared service install "$CF_TOKEN" || { echo -e "${RED}[!] Cloudflare Install Failed! Check Token.${NC}"; pause; return 1; }
   systemctl enable cloudflared || true; systemctl restart cloudflared || true
   echo -e "${GREEN}[+] Cloudflare Connected!${NC}"; pause
 }
+ssl_setup() {
+  echo -e "${CYAN}[*] SSL Setup...${NC}"
+  if ! check_panel; then pause; return 1; fi
+  ask "Enter Your Domain Example panel.royalnodes.bond: " SSL_DOMAIN_RAW
+  SSL_DOMAIN=$(echo "$SSL_DOMAIN_RAW" | tr -d ' \r\n\t')
+  if [ -z "$SSL_DOMAIN" ]; then echo -e "${RED}[!] Domain Empty!${NC}"; pause; return 1; fi
+  ask "Enter Email: " SSL_EMAIL_RAW
+  SSL_EMAIL=$(echo "$SSL_EMAIL_RAW" | tr -d ' \r\n\t')
+  if [ -z "$SSL_EMAIL" ]; then SSL_EMAIL="admin@$SSL_DOMAIN"; fi
+  certbot --nginx -d "$SSL_DOMAIN" --non-interactive --agree-tos -m "$SSL_EMAIL" 2>/dev/null || certbot --nginx -d "$SSL_DOMAIN" 2>/dev/null || echo -e "${YELLOW}SSL failed - Check domain points to this VPS IP${NC}"
+  systemctl restart nginx 2>/dev/null || true
+  echo -e "${GREEN}[+] SSL Done!${NC}"; pause
+}
+firewall_setup() {
+  echo -e "${CYAN}[*] Firewall Setup...${NC}"
+  ensure_deps
+  ufw allow 22/tcp 2>/dev/null || true
+  ufw allow 80/tcp 2>/dev/null || true
+  ufw allow 443/tcp 2>/dev/null || true
+  ufw allow 8080/tcp 2>/dev/null || true
+  ufw allow 2022/tcp 2>/dev/null || true
+  ufw allow 25565:25575/tcp 2>/dev/null || true
+  ufw --force enable 2>/dev/null || true
+  ufw status 2>/dev/null || true
+  echo -e "${GREEN}[+] Firewall ON - Ports 22, 80, 443, 8080, 2022, 25565-25575 Open${NC}"; pause
+}
+network_menu() {
+  while true; do
+  show_banner
+  echo -e "${CYAN}=== NETWORK MENU ===${NC}"
+  echo -e "${WHITE}  [1] Cloudflare Tunnel Setup${NC}"
+  echo -e "${WHITE}  [2] SSL Setup${NC}"
+  echo -e "${WHITE}  [3] Firewall Setup${NC}"
+  echo -e "${WHITE}  [4] SSHX System${NC}"
+  echo -e "${WHITE}  [0] Back${NC}"
+  echo -e "${PURPLE}============================================================${NC}"
+  ask "Select 0-4: " n_raw; n=$(clean_input "$n_raw")
+  case $n in
+    1) setup_cloudflare ;;
+    2) ssl_setup ;;
+    3) firewall_setup ;;
+    4) sshx_system ;;
+    0) return ;;
+    *) echo -e "${RED}Invalid!${NC}"; sleep 1 ;;
+  esac
+  done
+}
+sshx_system() {
+  echo -e "${CYAN}[*] SSHX System...${NC}"
+  if ! command -v sshx &> /dev/null; then curl -sSf https://sshx.io/get -o /tmp/sshx.sh; sh /tmp/sshx.sh; fi
+  echo -e "${GREEN}SSHX Ready! Command: sshx${NC}"
+  echo -e "${YELLOW}WARNING: Do not share link with strangers!${NC}"
+  ask "Start SSHX now? Type y or n: " yn_raw; yn=$(clean_input "$yn_raw")
+  if [ "$yn" = "y" ]; then sshx; fi
+  pause
+}
 
+# ============ BACKUP + RESTORE ============
 do_backup() {
   mkdir -p /backup/umeshplayzz
   DATE=$(date +%F-%H-%M)
@@ -291,29 +414,51 @@ do_backup() {
     DB_NAME=$(grep "^DB_DATABASE=" /var/www/pterodactyl/.env | cut -d '=' -f2 | tr -d '"' | tr -d "'")
     DB_USER=${DB_USER:-pterodactyl}; DB_NAME=${DB_NAME:-pterodactyl}
   fi
-  echo -e "${CYAN}Creating Backup... [AUTO]${NC}"
+  echo -e "${CYAN}Creating Backup...${NC}"
   if [ -n "$DB_PASS" ]; then mysqldump -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" > "/backup/umeshplayzz/panel-$DATE.sql" 2>/dev/null || mysqldump -u root "$DB_NAME" > "/backup/umeshplayzz/panel-$DATE.sql" 2>/dev/null || true
   else mysqldump -u root "$DB_NAME" > "/backup/umeshplayzz/panel-$DATE.sql" 2>/dev/null || true; fi
   tar -czf "/backup/umeshplayzz/files-$DATE.tar.gz" /var/www/pterodactyl /etc/pterodactyl 2>/dev/null || true
   echo "Backup Done: $DATE" >> /backup/umeshplayzz/log.txt
   find /backup/umeshplayzz -type f -mtime +7 -delete 2>/dev/null || true
-  if [ -f "/backup/umeshplayzz/files-$DATE.tar.gz" ]; then echo -e "${GREEN}[+] Backup Done: /backup/umeshplayzz/files-$DATE.tar.gz${NC}"; else echo -e "${YELLOW}[!] Backup file nahi bana, Panel install hai ya nahi check karo.${NC}"; fi
+  if [ -f "/backup/umeshplayzz/files-$DATE.tar.gz" ]; then echo -e "${GREEN}[+] Backup Done: /backup/umeshplayzz/files-$DATE.tar.gz${NC}"; else echo -e "${YELLOW}[!] Backup file not created, Check Panel install.${NC}"; fi
 }
-
 upload_backup_to_website() {
   echo -e "${CYAN}=== BACKUP UPLOAD TO WEBSITE ===${NC}"
-  echo -e "${YELLOW}Backup ko website pe upload karo - Data Loss ka tension khatam.${NC}"
   echo -e "${WHITE}Example: https://royalnodes.bond/upload.php${NC}"
-  read -p "Enter Upload URL (Enter to skip): " UPLOAD_URL < /dev/tty
-  if [ -z "$UPLOAD_URL" ]; then echo -e "${YELLOW}Upload Skipped - Local Backup hi rahega.${NC}"; return; fi
+  ask "Enter Upload URL or press Enter to skip: " UPLOAD_URL_RAW
+  UPLOAD_URL=$(echo "$UPLOAD_URL_RAW" | tr -d ' \r\n\t')
+  if [ -z "$UPLOAD_URL" ]; then echo -e "${YELLOW}Upload Skipped - Local Backup only.${NC}"; return; fi
   LATEST=$(ls -t /backup/umeshplayzz/files-*.tar.gz 2>/dev/null | head -1)
-  if [ -z "$LATEST" ]; then echo -e "${RED}[!] Koi backup nahi mila! Pehle backup banao.${NC}"; return; fi
+  if [ -z "$LATEST" ]; then echo -e "${RED}[!] No backup found! Create backup first.${NC}"; return; fi
   echo -e "${CYAN}Uploading $LATEST ...${NC}"
-  if curl -fsSL -F "file=@$LATEST" "$UPLOAD_URL" > /dev/null 2>&1; then echo -e "${GREEN}[+] Backup Website pe Upload Ho Gaya!${NC}"; else echo -e "${RED}[!] Upload Failed! URL check karo.${NC}"; fi
+  if curl -fsSL -F "file=@$LATEST" "$UPLOAD_URL" > /dev/null 2>&1; then echo -e "${GREEN}[+] Backup Uploaded to Website!${NC}"; else echo -e "${RED}[!] Upload Failed! Check URL.${NC}"; fi
 }
-
+restore_backup() {
+  echo -e "${CYAN}=== RESTORE BACKUP ===${NC}"
+  ls -lh /backup/umeshplayzz/ 2>/dev/null || { echo -e "${RED}[!] No backups found${NC}"; pause; return; }
+  ask "Enter Backup File Name Example files-2026-01-01.tar.gz: " RESTORE_FILE_RAW
+  RESTORE_FILE=$(echo "$RESTORE_FILE_RAW" | tr -d ' \r\n\t')
+  if [ ! -f "/backup/umeshplayzz/$RESTORE_FILE" ]; then echo -e "${RED}[!] File not found!${NC}"; pause; return; fi
+  ask "Are you sure? Type YES to restore: " RESTORE_CONFIRM_RAW
+  RESTORE_CONFIRM=$(clean_input "$RESTORE_CONFIRM_RAW")
+  if [ "$RESTORE_CONFIRM" != "yes" ]; then echo -e "${YELLOW}Cancelled${NC}"; pause; return; fi
+  echo -e "${CYAN}Restoring Files...${NC}"
+  tar -xzf "/backup/umeshplayzz/$RESTORE_FILE" -C / 2>/dev/null || true
+  SQL_FILE=$(echo "$RESTORE_FILE" | sed 's/files-/panel-/; s/.tar.gz/.sql/')
+  if [ -f "/backup/umeshplayzz/$SQL_FILE" ] && [ -f /var/www/pterodactyl/.env ]; then
+    echo -e "${CYAN}Restoring Database $SQL_FILE ...${NC}"
+    DB_PASS=$(grep "^DB_PASSWORD=" /var/www/pterodactyl/.env | cut -d '=' -f2 | tr -d '"' | tr -d "'")
+    DB_USER=$(grep "^DB_USERNAME=" /var/www/pterodactyl/.env | cut -d '=' -f2 | tr -d '"' | tr -d "'")
+    DB_NAME=$(grep "^DB_DATABASE=" /var/www/pterodactyl/.env | cut -d '=' -f2 | tr -d '"' | tr -d "'")
+    mysql -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" < "/backup/umeshplayzz/$SQL_FILE" 2>/dev/null || mysql -u root "$DB_NAME" < "/backup/umeshplayzz/$SQL_FILE" 2>/dev/null || echo -e "${YELLOW}Database restore failed, files restored${NC}"
+  fi
+  chown -R www-data:www-data /var/www/pterodactyl 2>/dev/null || true
+  systemctl restart nginx 2>/dev/null || true
+  systemctl restart wings 2>/dev/null || true
+  echo -e "${GREEN}[+] Restore Done! Files + Database Restored${NC}"; pause
+}
 setup_backup_auto() {
-  echo -e "${CYAN}[*] Auto Backup Setup [AUTO]${NC}"
+  echo -e "${CYAN}[*] Auto Backup Setup...${NC}"
   cat > /root/umeshplayzz-backup.sh << 'EOF'
 #!/bin/bash
 DATE=$(date +%F-%H-%M)
@@ -334,41 +479,244 @@ EOF
   do_backup
   echo -e "${GREEN}[+] Auto Backup ON! Daily 3 AM | Command: umesh-backup${NC}"
 }
-
 backup_menu() {
   while true; do
   show_banner
-  echo -e "${CYAN}=== BACKUP MENU - NO DATA LOSS ===${NC}"
-  echo -e "${WHITE}  [1] Create Backup Now [AUTO]${NC}"
-  echo -e "${WHITE}  [2] Enable Auto Backup (Daily 3 AM) [AUTO]${NC}"
-  echo -e "${WHITE}  [3] Upload Backup to Website [AUTO]${NC}"
-  echo -e "${WHITE}  [4] View Backup List${NC}"
+  echo -e "${CYAN}=== BACKUP MENU ===${NC}"
+  echo -e "${WHITE}  [1] Create Backup Now${NC}"
+  echo -e "${WHITE}  [2] Enable Auto Backup${NC}"
+  echo -e "${WHITE}  [3] Upload Backup to Website${NC}"
+  echo -e "${WHITE}  [4] Restore Backup${NC}"
+  echo -e "${WHITE}  [5] View Backup List${NC}"
   echo -e "${WHITE}  [0] Back${NC}"
   echo -e "${PURPLE}============================================================${NC}"
-  read -p "Select [0-4]: " b < /dev/tty
+  ask "Select 0-5: " b_raw; b=$(clean_input "$b_raw")
   case $b in
     1) do_backup; pause ;;
     2) setup_backup_auto; pause ;;
     3) upload_backup_to_website; pause ;;
-    4) ls -lh /backup/umeshplayzz/ 2>/dev/null || echo -e "${YELLOW}No backups.${NC}"; pause ;;
+    4) restore_backup ;;
+    5) ls -lh /backup/umeshplayzz/ 2>/dev/null || echo -e "${YELLOW}No backups.${NC}"; pause ;;
     0) return ;;
     *) echo -e "${RED}Invalid!${NC}"; sleep 1 ;;
   esac
   done
 }
 
-sshx_system() {
-  echo -e "${CYAN}[*] SSHX System [AUTO]${NC}"
-  if ! command -v sshx &> /dev/null; then curl -sSf https://sshx.io/get -o /tmp/sshx.sh; sh /tmp/sshx.sh; fi
-  echo -e "${GREEN}SSHX Ready! Command: sshx${NC}"
-  echo -e "${YELLOW}WARNING: Link kisi stranger ko mat dena!${NC}"
-  read -p "Start SSHX now? (y/n): " yn < /dev/tty
-  if [[ "$yn" == "y" || "$yn" == "Y" ]]; then sshx; fi
+# ============ NODE + WINGS ============
+node_setup() {
+  echo -e "${CYAN}=== NODE SETUP ===${NC}"
+  if ! check_wings; then pause; return 1; fi
+  echo -e "${WHITE}Step 1: Go to Panel Admin Nodes New Node and create Node${NC}"
+  echo -e "${WHITE}Step 2: Copy Node Config YAML${NC}"
+  echo -e "${WHITE}Step 3: Paste below - Type END in new line to finish${NC}"
+  echo -e "${YELLOW}Paste Config - Press Enter then paste, then type END:${NC}"
+  [ -f /etc/pterodactyl/config.yml ] && cp /etc/pterodactyl/config.yml /etc/pterodactyl/config.yml.bak 2>/dev/null || true
+  : > /tmp/new-config.yml
+  while IFS= read -r line; do
+    line=$(echo "$line" | tr -d '\r')
+    if [ "$(clean_input "$line")" = "end" ]; then break; fi
+    echo "$line" >> /tmp/new-config.yml
+  done
+  if [ -s /tmp/new-config.yml ]; then
+    cp /tmp/new-config.yml /etc/pterodactyl/config.yml
+    chmod 600 /etc/pterodactyl/config.yml
+    echo -e "${GREEN}Config Saved! Restarting Wings...${NC}"
+    systemctl restart wings 2>/dev/null || true
+    sleep 2
+    systemctl status wings --no-pager 2>/dev/null | head -15 || true
+    echo -e "${GREEN}[+] Node Setup Done! Wings Running${NC}"
+  else
+    echo -e "${RED}[!] Config Empty! Old Config Restored${NC}"
+    [ -f /etc/pterodactyl/config.yml.bak ] && cp /etc/pterodactyl/config.yml.bak /etc/pterodactyl/config.yml 2>/dev/null || true
+  fi
   pause
 }
+wings_restart() {
+  echo -e "${CYAN}[*] Restarting Wings...${NC}"
+  systemctl restart wings 2>/dev/null || true
+  sleep 2
+  systemctl status wings --no-pager 2>/dev/null | head -12 || true
+  echo -e "${GREEN}[+] Wings Restarted${NC}"; pause
+}
+node_menu() {
+  while true; do
+  show_banner
+  echo -e "${CYAN}=== NODE + WINGS MENU ===${NC}"
+  echo -e "${WHITE}  [1] Node Setup - Paste Config${NC}"
+  echo -e "${WHITE}  [2] Wings Restart${NC}"
+  echo -e "${WHITE}  [3] Wings Status${NC}"
+  echo -e "${WHITE}  [0] Back${NC}"
+  echo -e "${PURPLE}============================================================${NC}"
+  ask "Select 0-3: " nd_raw; nd=$(clean_input "$nd_raw")
+  case $nd in
+    1) node_setup ;;
+    2) wings_restart ;;
+    3) systemctl status wings --no-pager 2>/dev/null | head -20 || echo -e "${YELLOW}Wings not running${NC}"; pause ;;
+    0) return ;;
+    *) echo -e "${RED}Invalid!${NC}"; sleep 1 ;;
+  esac
+  done
+}
 
+# ============ PANEL TOOLS ============
+panel_user_create() {
+  echo -e "${CYAN}=== CREATE PANEL USER ===${NC}"
+  if ! check_panel; then pause; return 1; fi
+  cd /var/www/pterodactyl || return 1
+  echo -e "${YELLOW}Panel will ask Email Username Password, enter there${NC}"
+  php artisan p:user:make
+  echo -e "${GREEN}[+] User Create Done!${NC}"; pause
+}
+panel_password_reset() {
+  echo -e "${CYAN}=== PASSWORD RESET ===${NC}"
+  if ! check_panel; then pause; return 1; fi
+  cd /var/www/pterodactyl || return 1
+  ask "Enter User Email: " PR_EMAIL_RAW
+  PR_EMAIL=$(echo "$PR_EMAIL_RAW" | tr -d ' \r\n\t')
+  if [ -z "$PR_EMAIL" ]; then echo -e "${RED}[!] Email Empty!${NC}"; pause; return 1; fi
+  php artisan p:user:password "$PR_EMAIL" || echo -e "${YELLOW}Use Panel Forgot Password or try again${NC}"
+  pause
+}
+panel_tools_menu() {
+  while true; do
+  show_banner
+  echo -e "${CYAN}=== PANEL TOOLS ===${NC}"
+  echo -e "${WHITE}  [1] Create Panel User${NC}"
+  echo -e "${WHITE}  [2] Reset User Password${NC}"
+  echo -e "${WHITE}  [3] Clear Panel Cache${NC}"
+  echo -e "${WHITE}  [4] Restart Panel Services${NC}"
+  echo -e "${WHITE}  [0] Back${NC}"
+  echo -e "${PURPLE}============================================================${NC}"
+  ask "Select 0-4: " pt_raw; pt=$(clean_input "$pt_raw")
+  case $pt in
+    1) panel_user_create ;;
+    2) panel_password_reset ;;
+    3) if check_panel; then cd /var/www/pterodactyl; php artisan view:clear 2>/dev/null || true; php artisan config:clear 2>/dev/null || true; php artisan cache:clear 2>/dev/null || true; php artisan queue:restart 2>/dev/null || true; echo -e "${GREEN}[+] Cache Cleared${NC}"; fi; pause ;;
+    4) systemctl restart nginx 2>/dev/null || true; systemctl restart wings 2>/dev/null || true; cd /var/www/pterodactyl 2>/dev/null && php artisan queue:restart 2>/dev/null || true; echo -e "${GREEN}[+] Services Restarted${NC}"; pause ;;
+    0) return ;;
+    *) echo -e "${RED}Invalid!${NC}"; sleep 1 ;;
+  esac
+  done
+}
+
+# ============ MINECRAFT + SYSTEM + LOGS ============
+minecraft_menu() {
+  while true; do
+  show_banner
+  echo -e "${CYAN}=== MINECRAFT SERVERS ===${NC}"
+  echo -e "${WHITE}  [1] Paper - Best Performance${NC}"
+  echo -e "${WHITE}  [2] Purpur - Paper + Extra Features${NC}"
+  echo -e "${WHITE}  [3] Fabric - Mods${NC}"
+  echo -e "${WHITE}  [4] Forge - Mods${NC}"
+  echo -e "${WHITE}  [5] Vanilla - Original Minecraft${NC}"
+  echo -e "${WHITE}  [6] Spigot - Plugins${NC}"
+  echo -e "${WHITE}  [0] Back${NC}"
+  echo -e "${PURPLE}============================================================${NC}"
+  ask "Select 0-6: " m_raw; m=$(clean_input "$m_raw")
+  case $m in
+    1) echo -e "${GREEN}Paper: Panel - Create Server - Egg Paper - Version 1.20.4 - RAM 4096 MB${NC}"; pause ;;
+    2) echo -e "${GREEN}Purpur: Panel - Create Server - Egg Purpur - Version 1.20.4 - RAM 4096 MB${NC}"; pause ;;
+    3) echo -e "${GREEN}Fabric: Panel - Create Server - Egg Fabric - Version 1.20.1 - RAM 4096 MB${NC}"; pause ;;
+    4) echo -e "${GREEN}Forge: Panel - Create Server - Egg Forge - Version 1.20.1 - RAM 6144 MB${NC}"; pause ;;
+    5) echo -e "${GREEN}Vanilla: Panel - Create Server - Egg Vanilla - Version Latest - RAM 2048 MB${NC}"; pause ;;
+    6) echo -e "${GREEN}Spigot: Panel - Create Server - Egg Spigot - Version 1.20.4 - RAM 4096 MB${NC}"; pause ;;
+    0) return ;;
+    *) echo -e "${RED}Invalid!${NC}"; sleep 1 ;;
+  esac
+  done
+}
+system_info() {
+  echo -e "${CYAN}=== SYSTEM INFO ===${NC}"
+  echo -e "${WHITE}Hostname: $(hostname)${NC}"
+  echo -e "${WHITE}OS: $(grep PRETTY_NAME /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')${NC}"
+  echo -e "${WHITE}CPU: $(nproc) Cores${NC}"
+  echo -e "${WHITE}RAM: $(free -h 2>/dev/null | grep Mem | awk '{print $2}') Total | $(free -h 2>/dev/null | grep Mem | awk '{print $3}') Used${NC}"
+  echo -e "${WHITE}Disk: $(df -h / 2>/dev/null | tail -1 | awk '{print $2}') Total | $(df -h / 2>/dev/null | tail -1 | awk '{print $3}') Used${NC}"
+  echo -e "${WHITE}IP: $(curl -s --max-time 5 ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')${NC}"
+  echo -e "${WHITE}Uptime: $(uptime -p 2>/dev/null)${NC}"
+  echo -e "${CYAN}--- Services ---${NC}"
+  for s in nginx wings docker mariadb mysql cloudflared; do
+    if systemctl is-active --quiet "$s" 2>/dev/null; then echo -e "${GREEN}  $s : Running${NC}"; else echo -e "${RED}  $s : Stopped${NC}"; fi
+  done
+  pause
+}
+health_check() {
+  echo -e "${CYAN}[*] Health Check Running...${NC}"
+  [ -d "/var/www/pterodactyl" ] && echo -e "${GREEN}[OK] Panel Installed${NC}" || echo -e "${RED}[FAIL] Panel Not Installed${NC}"
+  [ -f /usr/local/bin/wings ] && echo -e "${GREEN}[OK] Wings Installed${NC}" || echo -e "${RED}[FAIL] Wings Not Installed${NC}"
+  command -v blueprint &> /dev/null && echo -e "${GREEN}[OK] Blueprint Installed${NC}" || echo -e "${YELLOW}[WARN] Blueprint Not Installed${NC}"
+  command -v docker &> /dev/null && echo -e "${GREEN}[OK] Docker Installed${NC}" || echo -e "${RED}[FAIL] Docker Not Installed${NC}"
+  [ -f /etc/pterodactyl/config.yml ] && echo -e "${GREEN}[OK] Wings Config Found${NC}" || echo -e "${YELLOW}[WARN] Wings Config Missing - Create Node First${NC}"
+  systemctl is-active --quiet nginx && echo -e "${GREEN}[OK] Nginx Running${NC}" || echo -e "${RED}[FAIL] Nginx Not Running${NC}"
+  systemctl is-active --quiet docker && echo -e "${GREEN}[OK] Docker Running${NC}" || echo -e "${RED}[FAIL] Docker Not Running${NC}"
+  systemctl is-active --quiet wings && echo -e "${GREEN}[OK] Wings Running${NC}" || echo -e "${YELLOW}[WARN] Wings Not Running - Restart After Config${NC}"
+  df -h / | tail -1 | awk '{print "Disk Free: " $4}'
+  free -h | grep Mem | awk '{print "RAM Free: " $4}'
+  echo -e "${GREEN}Health Check Done!${NC}"; pause
+}
+performance_tuning() {
+  echo -e "${CYAN}[*] Performance Tuning - Lag Free Setup...${NC}"
+  if [ ! -f /swapfile ]; then
+    fallocate -l 4G /swapfile 2>/dev/null || dd if=/dev/zero of=/swapfile bs=1M count=4096 2>/dev/null || true
+    chmod 600 /swapfile 2>/dev/null || true; mkswap /swapfile 2>/dev/null || true; swapon /swapfile 2>/dev/null || true
+    grep -q swapfile /etc/fstab 2>/dev/null || echo "/swapfile none swap sw 0 0" >> /etc/fstab
+    echo -e "${GREEN}Swap Created${NC}"
+  else echo -e "${GREEN}Swap Already Exists${NC}"; fi
+  grep -q "net.core.rmem_max" /etc/sysctl.conf 2>/dev/null || echo "net.core.rmem_max=16777216" >> /etc/sysctl.conf
+  grep -q "net.core.wmem_max" /etc/sysctl.conf 2>/dev/null || echo "net.core.wmem_max=16777216" >> /etc/sysctl.conf
+  grep -q "net.ipv4.tcp_rmem" /etc/sysctl.conf 2>/dev/null || echo "net.ipv4.tcp_rmem=4096 87380 16777216" >> /etc/sysctl.conf
+  grep -q "net.ipv4.tcp_wmem" /etc/sysctl.conf 2>/dev/null || echo "net.ipv4.tcp_wmem=4096 65536 16777216" >> /etc/sysctl.conf
+  grep -q "vm.swappiness" /etc/sysctl.conf 2>/dev/null || echo "vm.swappiness=10" >> /etc/sysctl.conf
+  sysctl -p 2>/dev/null || true
+  echo -e "${GREEN}[+] Performance Tuning Done! VPS Lag Free - Docker Images Safe${NC}"; pause
+}
+system_menu() {
+  while true; do
+  show_banner
+  echo -e "${CYAN}=== SYSTEM TOOLS ===${NC}"
+  echo -e "${WHITE}  [1] System Info${NC}"
+  echo -e "${WHITE}  [2] Health Check${NC}"
+  echo -e "${WHITE}  [3] Performance Tuning${NC}"
+  echo -e "${WHITE}  [4] Minecraft Servers${NC}"
+  echo -e "${WHITE}  [0] Back${NC}"
+  echo -e "${PURPLE}============================================================${NC}"
+  ask "Select 0-4: " s_raw; s=$(clean_input "$s_raw")
+  case $s in
+    1) system_info ;;
+    2) health_check ;;
+    3) performance_tuning ;;
+    4) minecraft_menu ;;
+    0) return ;;
+    *) echo -e "${RED}Invalid!${NC}"; sleep 1 ;;
+  esac
+  done
+}
+logs_menu() {
+  while true; do
+  show_banner
+  echo -e "${CYAN}=== LOGS MENU ===${NC}"
+  echo -e "${WHITE}  [1] Wings Logs${NC}"
+  echo -e "${WHITE}  [2] Nginx Logs${NC}"
+  echo -e "${WHITE}  [3] Panel Logs${NC}"
+  echo -e "${WHITE}  [4] Docker Logs${NC}"
+  echo -e "${WHITE}  [0] Back${NC}"
+  echo -e "${PURPLE}============================================================${NC}"
+  ask "Select 0-4: " lg_raw; lg=$(clean_input "$lg_raw")
+  case $lg in
+    1) journalctl -u wings --no-pager -n 50 2>/dev/null || echo -e "${YELLOW}No Wings logs${NC}"; pause ;;
+    2) tail -n 50 /var/log/nginx/error.log 2>/dev/null || echo -e "${YELLOW}No Nginx logs${NC}"; pause ;;
+    3) tail -n 50 /var/www/pterodactyl/storage/logs/laravel.log 2>/dev/null || echo -e "${YELLOW}No Panel logs${NC}"; pause ;;
+    4) docker ps 2>/dev/null || echo -e "${YELLOW}Docker not running${NC}"; pause ;;
+    0) return ;;
+    *) echo -e "${RED}Invalid!${NC}"; sleep 1 ;;
+  esac
+  done
+}
+
+# ============ UPDATE + UNINSTALL + FULL AUTO ============
 update_system() {
-  echo -e "${CYAN}[*] Updating System + Panel + Blueprint + Wings [AUTO]${NC}"
+  echo -e "${CYAN}[*] Updating System + Panel + Blueprint + Wings...${NC}"
   apt update && apt upgrade -y; apt autoremove -y || true
   if [ -d "/var/www/pterodactyl" ]; then
     cd /var/www/pterodactyl || return 1
@@ -377,7 +725,7 @@ update_system() {
     php artisan view:clear 2>/dev/null || true; php artisan config:clear 2>/dev/null || true
     chown -R www-data:www-data /var/www/pterodactyl 2>/dev/null || true
     php artisan queue:restart 2>/dev/null || true; php artisan up 2>/dev/null || true
-    blueprint -update < /dev/tty 2>/dev/null || { curl -fsSL -o /tmp/bp-up.sh https://raw.githubusercontent.com/BlueprintFramework/framework/main/install.sh; bash /tmp/bp-up.sh < /dev/tty; } || true
+    printf "y\n" | blueprint -update 2>/dev/null || { curl -fsSL -o /tmp/bp-up.sh https://raw.githubusercontent.com/BlueprintFramework/framework/main/install.sh; bash /tmp/bp-up.sh; } || true
     echo -e "${GREEN}[+] Panel + Blueprint Updated!${NC}"
   fi
   if [ -f /usr/local/bin/wings ]; then
@@ -388,11 +736,10 @@ update_system() {
   systemctl restart nginx 2>/dev/null || true
   echo -e "${GREEN}✅ EVERYTHING UPDATED!${NC}"; pause
 }
-
 uninstall_all() {
-  echo -e "${RED}WARNING: Panel + Wings + Database Delete Ho Jayega!${NC}"
-  read -p "Are you sure? Type YES to confirm: " confirm < /dev/tty
-  if [ "$confirm" != "YES" ]; then echo -e "${YELLOW}Cancelled.${NC}"; pause; return; fi
+  echo -e "${RED}WARNING: Panel + Wings + Database will be deleted!${NC}"
+  ask "Are you sure? Type YES to confirm: " confirm_raw; confirm=$(clean_input "$confirm_raw")
+  if [ "$confirm" != "yes" ]; then echo -e "${YELLOW}Cancelled.${NC}"; pause; return; fi
   systemctl stop wings nginx mysql mariadb 2>/dev/null || true; systemctl disable wings 2>/dev/null || true
   rm -rf /var/www/pterodactyl /etc/pterodactyl /usr/local/bin/wings /etc/systemd/system/wings.service /backup/umeshplayzz
   rm -f /usr/local/bin/umesh-backup /root/umeshplayzz-backup.sh
@@ -400,19 +747,19 @@ uninstall_all() {
   systemctl daemon-reload
   echo -e "${GREEN}[+] Uninstall Complete! VPS Clean.${NC}"; pause
 }
-
 full_install() {
   FULL_MODE=1
   echo -e "${GREEN}=== FULL AUTO INSTALL STARTED ===${NC}"
-  echo -e "${YELLOW}Panel me Domain / Email / Password tum daloge, baaki sab AUTO.${NC}"
   sleep 1
   install_deps
-  if ! install_panel; then echo -e "${RED}[!] Panel Fail, Full Install Ruk Gaya.${NC}"; FULL_MODE=0; pause; return 1; fi
+  if ! install_panel; then echo -e "${RED}[!] Panel Failed, Full Install Stopped.${NC}"; FULL_MODE=0; pause; return 1; fi
   install_wings
   install_blueprint
   install_nebula
-  echo -e "${CYAN}[*] Installing ALL Extensions [AUTO]${NC}"
-  if check_blueprint; then for ext in version-changer player-manager plugin-installer hux-register snowflakes motd-maker icon-importer server-splitting allocation-manager; do bp_install "$ext" || true; done; fi
+  echo -e "${CYAN}[*] Installing All Extensions...${NC}"
+  if check_blueprint; then for ext in version-changer player-manager plugin-installer hux-register snowflakes motd-maker icon-importer server-splitting allocation-manager server-importer file-manager; do bp_install "$ext" || true; done; fi
+  performance_tuning
+  firewall_setup
   setup_backup_auto
   FULL_MODE=0
   show_banner
@@ -421,42 +768,44 @@ full_install() {
   echo -e "${WHITE}Panel + Wings + Blueprint + Nebula + All Extensions Done!${NC}"
   echo -e "${CYAN}Backup: Daily 3 AM | Command: umesh-backup${NC}"
   echo -e "${YELLOW}LAST STEP:${NC}"
-  echo -e "${WHITE}1. Panel -> Admin -> Nodes -> New Node${NC}"
-  echo -e "${WHITE}2. Config -> nano /etc/pterodactyl/config.yml${NC}"
-  echo -e "${WHITE}3. systemctl restart wings${NC}"
+  echo -e "${WHITE}1. Use Node Menu - Paste Config${NC}"
+  echo -e "${WHITE}2. systemctl restart wings${NC}"
   echo -e "${PURPLE}============================================================${NC}"
   pause
 }
 
+# ============ MAIN MENU - COMPACT 12 OPTIONS ONLY ============
 while true; do
 show_banner
-echo -e "${WHITE}  [1] Panel Install (Domain Yahi Puchega)${NC}"
-echo -e "${WHITE}  [2] Wings Install [AUTO - Minecraft Ready]${NC}"
-echo -e "${WHITE}  [3] Blueprint Install [AUTO]${NC}"
-echo -e "${WHITE}  [4] Nebula Theme + UMESHPLAYZZ Branding [AUTO]${NC}"
-echo -e "${WHITE}  [5] Extensions Menu (Version Changer, Player Manager, Plugin Installer, Hux, Snowflakes, MOTD, Icon, All)${NC}"
-echo -e "${WHITE}  [6] Cloudflare Tunnel Setup (Token Yahi Puchega)${NC}"
-echo -e "${WHITE}  [7] Backup Menu (Backup + Website Upload + Auto Backup)${NC}"
-echo -e "${WHITE}  [8] SSHX System${NC}"
-echo -e "${WHITE}  [9] Update System (Panel + Blueprint + Wings) [AUTO]${NC}"
-echo -e "${WHITE}  [10] FULL AUTO - Panel + Wings + Blueprint + Nebula + All Extensions + Backup${NC}"
-echo -e "${WHITE}  [11] Uninstall${NC}"
+echo -e "${WHITE}  [1] Install - Panel + Wings${NC}"
+echo -e "${WHITE}  [2] Blueprint + Themes${NC}"
+echo -e "${WHITE}  [3] Extensions Menu${NC}"
+echo -e "${WHITE}  [4] Network - Cloudflare + SSL + Firewall + SSHX${NC}"
+echo -e "${WHITE}  [5] Backup Menu${NC}"
+echo -e "${WHITE}  [6] Node + Wings Menu${NC}"
+echo -e "${WHITE}  [7] Panel Tools${NC}"
+echo -e "${WHITE}  [8] System Tools + Minecraft${NC}"
+echo -e "${WHITE}  [9] Logs Menu${NC}"
+echo -e "${WHITE}  [10] Full Auto Install${NC}"
+echo -e "${WHITE}  [11] Update System${NC}"
+echo -e "${WHITE}  [12] Uninstall${NC}"
 echo -e "${RED}  [0] Exit${NC}"
 echo -e "${PURPLE}============================================================${NC}"
-read -p "Select Option [0-11]: " opt < /dev/tty
+ask "Select Option 0-12: " opt_raw; opt=$(clean_input "$opt_raw")
 case $opt in
-  1) install_panel ;;
-  2) install_wings ;;
-  3) install_blueprint ;;
-  4) install_nebula ;;
-  5) extensions_menu ;;
-  6) setup_cloudflare ;;
-  7) backup_menu ;;
-  8) sshx_system ;;
-  9) update_system ;;
+  1) install_menu ;;
+  2) blueprint_themes_menu ;;
+  3) extensions_menu ;;
+  4) network_menu ;;
+  5) backup_menu ;;
+  6) node_menu ;;
+  7) panel_tools_menu ;;
+  8) system_menu ;;
+  9) logs_menu ;;
   10) full_install ;;
-  11) uninstall_all ;;
+  11) update_system ;;
+  12) uninstall_all ;;
   0) animated_exit ;;
-  *) echo -e "${RED}Invalid option! Choose 0-11.${NC}"; sleep 1 ;;
+  *) echo -e "${RED}Invalid option! Choose 0-12. You typed: $opt_raw${NC}"; sleep 1 ;;
 esac
 done
